@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#151225" />
+  <title>ASTÉR · 星夜聊天室（前端练习）</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --base: #141125;
+      --base2: #241b39;
+      --panel: rgba(37, 30, 59, .88);
+      --border: rgba(230, 210, 255, .13);
+      --text: #f3eefa;
+      --muted: #b3a9c4;
+      --accent: #cdb0fa;
+      --accent-dark: #785ba9;
+      --mine: #5b497a;
+      --other: #302842;
+      --glow: rgba(154, 111, 214, .23);
+      --moon: #ecdfff;
+    }
+    body[data-theme="rose"] {
+      --base:#24141e; --base2:#432431; --panel:rgba(57,33,46,.88);
+      --border:rgba(255,216,228,.13); --text:#fff0f3; --muted:#d5adbb;
+      --accent:#ffc4d5; --accent-dark:#a95c7b; --mine:#80435d;
+      --other:#492b3b; --glow:rgba(252,141,180,.22); --moon:#ffe0e8;
+    }
+    body[data-theme="ocean"] {
+      --base:#0e202c; --base2:#173c48; --panel:rgba(23,51,65,.9);
+      --border:rgba(203,244,252,.13); --text:#eafcff; --muted:#a4cbd1;
+      --accent:#a8e6ed; --accent-dark:#468c97; --mine:#376b77;
+      --other:#214753; --glow:rgba(112,205,225,.21); --moon:#d5faff;
+    }
+    * { box-sizing:border-box; }
+    html, body {margin:0; min-height:100%;}
+    body {
+      background: var(--base);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+      transition: background .4s ease, color .3s ease;
+      overflow-x:hidden;
+    }
+    body:before {
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;
+      background:radial-gradient(ellipse 55% 55% at 81% 2%, var(--glow), transparent 75%),
+      radial-gradient(ellipse 60% 80% at 0% 90%,var(--glow),transparent 82%),
+      linear-gradient(145deg,var(--base),var(--base2) 130%);
+    }
+    body:after {
+      content:"";position:fixed;inset:0;z-index:-1;opacity:.56;pointer-events:none;
+      background-image:radial-gradient(circle at 12% 24%,#fff 1px,transparent 1.7px),radial-gradient(circle at 82% 14%,#fff 1px,transparent 2px),radial-gradient(circle at 46% 79%,#fff .75px,transparent 1.5px),radial-gradient(circle at 91% 63%,#fff .75px,transparent 1.5px);
+      background-size:317px 291px,417px 339px,277px 397px,391px 293px;
+    }
+    button, textarea {font:inherit;}
+    button {cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    button:focus-visible,textarea:focus-visible {outline:2px solid var(--accent);outline-offset:3px;}
+    .app {width:min(1220px, 100%); min-height:100dvh; margin:0 auto; padding:clamp(12px,3vw,38px); display:grid;grid-template-columns:284px minmax(0,1fr);gap:18px;}
+    .glass {background:var(--panel); border:1px solid var(--border); box-shadow:0 25px 75px #05030e4a; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:27px;}
+    .side {padding:30px 24px;display:flex;flex-direction:column;gap:28px;}
+    .logo {display:flex;gap:12px;align-items:center;}
+    .mark {width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--border);border-radius:14px;color:var(--accent);font-size:25px;background:var(--glow)}
+    .logotext {letter-spacing:.23em;font-size:15px;font-weight:700;}
+    .eyebrow {display:block;color:var(--muted);font-size:10px;letter-spacing:.2em; margin-top:5px;}
+    .side-heading {font-family:Georgia,serif;font-size:30px;line-height:1.18;letter-spacing:.03em;margin:10px 0 5px;}
+    .side-desc {color:var(--muted);font-size:13px;line-height:1.9;margin:0;}
+    .kicker {color:var(--accent);font-size:11px;letter-spacing:.17em;font-weight:700;}
+    .divider {height:1px;background:var(--border);}
+    .theme-row {display:flex;gap:10px;margin-top:14px;}
+    .swatch {width:39px;height:39px;border-radius:12px;border:2px solid transparent;box-shadow:inset 0 0 0 1px #ffffff25;position:relative;}
+    .swatch[aria-pressed="true"] {border-color:var(--text);transform:translateY(-2px)}
+    .swatch:after {content:"";position:absolute;width:10px;height:10px;border-radius:50%;top:13px;left:13px;background:#fff9;}
+    .swatch[data-choice="violet"] {background:linear-gradient(140deg,#392553,#a97ee8)}
+    .swatch[data-choice="rose"] {background:linear-gradient(140deg,#6c3049,#ffb5cd)}
+    .swatch[data-choice="ocean"] {background:linear-gradient(140deg,#184358,#93dee3)}
+    .side-card {background:var(--glow);border:1px solid var(--border);border-radius:19px;padding:18px;}
+    .side-card strong{font-size:13px;}
+    .side-card p {color:var(--muted);font-size:12px;line-height:1.8;margin:8px 0 0;}
+    .side-foot {margin-top:auto;color:var(--muted);font-size:11px;line-height:1.7;}
+    .chat {min-height:min(840px,calc(100dvh - 76px));height:calc(100dvh - clamp(24px,6vw,76px));max-height:990px;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+    .chat-head {display:flex;align-items:center;gap:13px;padding:20px 26px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .avatar {width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 28%,#f5eafa 0,var(--accent) 19%,var(--accent-dark) 60%,var(--base) 100%);box-shadow:0 0 25px var(--glow);flex-shrink:0;}
+    .avatar span {font-size:23px;color:var(--base);}
+    .chat-name {font-weight:700;letter-spacing:.08em;font-size:15px;}
+    .status {font-size:11px;color:var(--muted);margin-top:6px;}
+    .dot {display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:#b5d8a9;}
+    .head-actions{margin-left:auto;display:flex;gap:9px;align-items:center;}
+    .icon-btn {background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:10px 13px;font-size:12px;}
+    .icon-btn:hover {color:var(--text);border-color:var(--accent);}
+    .mobile-theme {display:none;gap:5px;margin-left:auto;}
+    .mobile-theme .swatch {width:25px;height:25px;border-radius:50%;}
+    .mobile-theme .swatch:after {display:none;}
+    .messages {padding:36px clamp(18px,5vw,70px) 18px;overflow-y:auto; flex:1;scroll-behavior:smooth;}
+    .intro {display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:25px;}
+    .moon {width:78px;height:78px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--border);background:var(--glow);box-shadow:0 0 50px var(--glow);color:var(--moon);font-size:38px;margin-bottom:19px;}
+    .intro .kicker {font-size:10px;}
+    .intro h1 {font-family:Georgia, "Songti SC",serif;font-size:clamp(25px,4vw,36px);font-weight:400;margin:13px 0;}
+    .intro p {color:var(--muted);font-size:12px;margin:0;line-height:1.75;max-width:420px;}
+    .date {color:var(--muted);font-size:10px;text-align:center;letter-spacing:.16em;margin:14px 0 24px;}
+    .msg {display:flex;flex-direction:column;gap:6px;max-width:min(80%,440px);margin:0 0 22px;animation:rise .22s ease both;}
+    @keyframes rise {from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+    .msg.me {margin-left:auto;align-items:flex-end;}
+    .msg.bot {margin-right:auto;align-items:flex-start;}
+    .msg .who {font-size:10px;color:var(--muted);padding:0 7px;}
+    .bubble {background:var(--other);border:1px solid var(--border);border-radius:6px 18px 18px 18px;padding:13px 17px;font-size:14px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;}
+    .msg.me .bubble {background:var(--mine);border-radius:18px 18px 6px 18px;}
+    .typing {display:none;gap:6px;padding:0 clamp(18px,5vw,70px) 7px;align-items:center;color:var(--muted);font-size:11px;}
+    .typing.show {display:flex;}
+    .typing i {height:5px;width:5px;background:var(--accent);border-radius:50%;animation:pulse 1.1s infinite alternate;}
+    .typing i:nth-child(3) {animation-delay:.2s}.typing i:nth-child(4){animation-delay:.4s}
+    @keyframes pulse {to{opacity:.2;transform:translateY(-3px)}}
+    .composer-wrap {padding:10px clamp(16px,4vw,38px) 19px;border-top:1px solid var(--border);}
+    .quick {display:flex;gap:8px;flex-wrap:wrap;padding-bottom:12px;}
+    .chip {border:1px solid var(--border);background:var(--glow);padding:7px 12px;color:var(--text);font-size:12px;border-radius:999px;}
+    .chip:hover {border-color:var(--accent);}
+    .composer {display:flex;align-items:flex-end;gap:11px;border:1px solid var(--border);background:var(--other);padding:9px 9px 9px 16px;border-radius:18px;}
+    textarea {flex:1;min-width:0;max-height:130px;min-height:28px;background:transparent;border:0;resize:none;color:var(--text);outline:none;font-size:14px;line-height:1.6;}
+    textarea::placeholder {color:var(--muted);}
+    .send {border:0;border-radius:12px;min-width:44px;height:42px;background:var(--accent);color:var(--base);font-size:20px;font-weight:700;}
+    .send:disabled{opacity:.45;cursor:not-allowed;}
+    .disclaimer {text-align:center;color:var(--muted);font-size:10px;margin-top:11px;line-height:1.5;}
+    .tip {padding:12px 16px;border:1px solid var(--border);background:var(--glow);border-radius:12px;color:var(--text);font-size:12px;line-height:1.7;display:none;}
+    .tip.visible {display:block;}
+    @media (max-width:760px) {
+      .app {display:block;padding:10px;}
+      .side {display:none;}
+      .chat {min-height:calc(100dvh - 20px);height:calc(100dvh - 20px);border-radius:19px;}
+      .chat-head {padding:15px;}
+      .head-actions .icon-btn {padding:8px 9px;}
+      .mobile-theme{display:flex;}
+      .messages {padding-top:23px;}
+      .msg {max-width:90%;}
+      .intro h1 {font-size:25px;}
+      .intro .moon {width:62px;height:62px;font-size:29px;}
+      .quick {gap:5px;}
+      .chip {font-size:11px;padding:6px 9px;}
+    }
+    @media (prefers-reduced-motion:reduce) {*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}}
+  </style>
+</head>
+<body data-theme="violet">
+  <div class="app">
+    <aside class="glass side">
+      <div class="logo"><div class="mark">✧</div><div><div class="logotext">ASTÉR</div><span class="eyebrow">PERSONAL SPACE · 001</span></div></div>
+      <div><span class="kicker">WELCOME, EXPLORER</span><h2 class="side-heading">一间属于你的<br>星夜聊天室。</h2><p class="side-desc">我们做的第一件小作品。<br>不用 API，不用服务器，<br>只用前端的魔法。</p></div>
+      <div class="divider"></div>
+      <div><span class="kicker">COLOR MOODS / 选择主题</span><div class="theme-row" role="group" aria-label="选择网页主题"><button class="swatch" data-choice="violet" aria-label="暮紫主题" aria-pressed="true"></button><button class="swatch" data-choice="rose" aria-label="玫瑰主题" aria-pressed="false"></button><button class="swatch" data-choice="ocean" aria-label="深海主题" aria-pressed="false"></button></div><p id="themeName" class="side-desc" style="margin-top:12px">暮紫星夜 · Violet</p></div>
+      <div class="side-card"><strong>✦ 今天学会的事</strong><p>你能亲手改动文字、颜色和按钮。HTML 管结构，CSS 管外观，JavaScript 让它回应你。</p></div>
+      <div class="side-foot">MADE FOR LIN · VERSION 1.0<br>每一颗星星，都从第一行代码开始。</div>
+    </aside>
+    <main class="glass chat" aria-label="演示聊天应用">
+      <header class="chat-head">
+        <div class="avatar" aria-hidden="true"><span>✧</span></div>
+        <div><div class="chat-name">ASTER <span style="font-size:11px;font-weight:400;color:var(--muted)">/ DEMO</span></div><div class="status"><span class="dot"></span>预设回复 · 离线演示</div></div>
+        <div class="mobile-theme" role="group" aria-label="手机主题切换"><button class="swatch" data-choice="violet" aria-label="暮紫" aria-pressed="true"></button><button class="swatch" data-choice="rose" aria-label="玫瑰" aria-pressed="false"></button><button class="swatch" data-choice="ocean" aria-label="深海" aria-pressed="false"></button></div>
+        <div class="head-actions"><button class="icon-btn" id="reset" title="清空演示对话">清空</button></div>
+      </header>
+      <div class="messages" id="messages" role="log" aria-live="polite" aria-label="聊天记录">
+        <div class="intro"><div class="moon" aria-hidden="true">☾</div><span class="kicker">YOUR FIRST FRONT-END PROJECT</span><h1>夜色很好。来聊聊吧。</h1><p>这是你亲手拥有的第一间网页聊天室。下面的回答是预设脚本，不连接真正的 GPT。</p></div>
+        <div class="date">THE BEGINNING OF A LITTLE UNIVERSE</div>
+        <div id="chatList"></div>
+      </div>
+      <div class="typing" id="typing" aria-hidden="true"><span>模拟回复中</span><i></i><i></i><i></i></div>
+      <div class="composer-wrap">
+        <div id="storageTip" class="tip" role="status"></div>
+        <div class="quick" role="group" aria-label="试试快捷消息"><button class="chip" data-prompt="你好，Aster">打个招呼</button><button class="chip" data-prompt="前端到底是什么？">学习前端</button><button class="chip" data-prompt="换个主题试试">主题玩法</button></div>
+        <form id="chatForm" class="composer"><textarea id="draft" rows="1" maxlength="800" aria-label="输入消息" placeholder="写一点什么…（Enter 发送）"></textarea><button type="submit" class="send" aria-label="发送消息">↑</button></form>
+        <div class="disclaimer">前端练习 · 不调用 AI / 不上传你的聊天内容 / 本地保存尽力而为</div>
+      </div>
+    </main>
+  </div>
+  <script>
+  (() => {
+    'use strict';
+    const messagesEl = document.getElementById('messages');
+    const listEl = document.getElementById('chatList');
+    const typingEl = document.getElementById('typing');
+    const draft = document.getElementById('draft');
+    const form = document.getElementById('chatForm');
+    const themeName = document.getElementById('themeName');
+    const storageTip = document.getElementById('storageTip');
+    const KEY = 'aster-demo-chat-v1';
+    const THEME_KEY = 'aster-demo-theme-v1';
+    const welcome = {who:'bot',text:'晚上好，旅行者。欢迎来到我们的第一间小小聊天室。试着发一句话，或者点下方的快捷提问吧。'};
+    let data = [welcome];
+    let responding = false;
+    const texts = {
+      violet:'暮紫星夜 · Violet', rose:'玫瑰绒夜 · Rose', ocean:'深海微光 · Ocean'
+    };
+    function showTip(msg) {
+      storageTip.textContent = msg;storageTip.classList.add('visible');
+    }
+    try {
+      const saved=JSON.parse(localStorage.getItem(KEY));
+      if(Array.isArray(saved) && saved.length && saved.every(m=>m && ['bot','me'].includes(m.who) && typeof m.text==='string')) data=saved.slice(-120);
+    } catch (e) { /* iPad local-file previews may not allow storage. */ }
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(data)); }
+      catch (e) {showTip('当前预览环境无法持续保存聊天。发布到自己的网页后通常会更稳定。');}
+    }
+    function scrollDown(){ messagesEl.scrollTop=messagesEl.scrollHeight; }
+    function render(){
+      listEl.replaceChildren();
+      for(const item of data) {
+        const wrap = document.createElement('div');wrap.className='msg '+item.who;
+        const who = document.createElement('span');who.className='who';who.textContent=item.who==='me'?'你':'Aster · 预设回复';
+        const bubble = document.createElement('div');bubble.className='bubble';bubble.textContent=item.text;
+        wrap.append(who,bubble);listEl.appendChild(wrap);
+      }
+      requestAnimationFrame(scrollDown);
+    }
+    function replyFor(t){
+      if(/前端|html|css|JavaScript|代码|开发/.test(t)) return '前端就是网页上你看得见、点得到的部分。HTML 是骨架，CSS 是漂亮的衣服，JavaScript 负责让按钮和聊天框真的有反应。你已经在用它们了。';
+      if(/主题|颜色|皮肤|美化|换/.test(t)) return '看到左边的三个小色块了吗？点一下，整间聊天室就会换颜色。手机上可以点顶部的小圆点。这就是 CSS 变量与 JavaScript 的合作。';
+      if(/你好|嗨|hello|hi/i.test(t)) return '你好呀。这里是一间离线的小聊天室，我的回应来自预先写好的规则。等以后你愿意，再研究真正的 AI 对话也不迟。';
+      if(/费用|钱|免费|api/i.test(t)) return '这一版没有调用任何付费 API，只有 HTML、CSS 和 JavaScript。你可以先尽情修改外观，不必急着花钱。';
+      if(/谢谢|开心|喜欢|好看|漂亮/.test(t)) return '那就把这份喜欢留在页面里。下一步，可以给它换字体、增加动画，或者画一个属于你的头像。';
+      const replies = ['收到。虽然现在只是预设对话，但这个小网页的样子已经可以由你决定了。','你发出的每条消息，都会变成一枚真正的聊天气泡。看，前端已经在工作。','这是我们的第一版。现在它不会思考，但它会听从你写下的代码。','我在这里做的是模拟回复。想让它变得更漂亮吗？试试切换一下主题。'];
+      let sum=0;for(const ch of t)sum+=ch.charCodeAt(0);return replies[sum%replies.length];
+    }
+    function submit(text){
+      const msg=text.trim();if(!msg || responding)return;
+      data.push({who:'me',text:msg.slice(0,800)});save();render();draft.value='';draft.style.height='';responding=true;typingEl.classList.add('show');
+      window.setTimeout(()=>{
+        data.push({who:'bot',text:replyFor(msg)});if(data.length>120)data=data.slice(-120);
+        save();render();responding=false;typingEl.classList.remove('show');
+      }, 560);
+    }
+    function setTheme(theme){
+      if(!texts[theme]) return;
+      document.body.dataset.theme=theme;
+      document.querySelectorAll('.swatch').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.choice===theme)));
+      themeName.textContent=texts[theme];
+      try{localStorage.setItem(THEME_KEY,theme);}catch(e){}
+    }
+    try{setTheme(localStorage.getItem(THEME_KEY)||'violet')}catch(e){setTheme('violet')}
+    document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.choice)));
+    document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>submit(b.dataset.prompt)));
+    form.addEventListener('submit',e=>{e.preventDefault();submit(draft.value)});
+    draft.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit(draft.value)}});
+    draft.addEventListener('input',()=>{draft.style.height='auto';draft.style.height=Math.min(draft.scrollHeight,130)+'px'});
+    document.getElementById('reset').addEventListener('click',()=>{
+      if(!confirm('要清空这间练习聊天室的消息吗？'))return;
+      data=[welcome];save();render();
+    });
+    render();
+  })();
+  </script>
+</body>
+</html>
